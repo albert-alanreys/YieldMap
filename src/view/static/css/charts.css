@@ -11,6 +11,7 @@
 .chart {
   width: 100%;
   height: calc((100vh - 80px) / 3);
+  padding-top: 42px;
 
   border-radius: 8px;
   background-color: #fafafa;

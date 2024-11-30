@@ -62,7 +62,7 @@ export default class ChartManager {
       visible: false,
     },
     leftPriceScale: {
-      scaleMargins: { top: 0.15, bottom: 0.05 },
+      scaleMargins: { top: 0.05, bottom: 0.05 },
       borderVisible: false,
       visible: true,
     },
@@ -108,24 +108,56 @@ export default class ChartManager {
     crosshairMarkerBorderColor: "#fafafa",
   };
   toolTipWidth = 84;
+  chartsCount = 30;
 
   constructor(data) {
+    this.iterator = this.chartIterator(data, 30);
     this.data = data;
   }
 
+  *chartIterator(data, batchSize) {
+    const keys = Object.keys(data);
+
+    for (let i = 0; i < keys.length; i += batchSize) {
+      yield keys.slice(i, i + batchSize);
+    }
+  }
+
   createCharts() {
-    for (let date in this.data) {
+    this.nextBatch = this.iterator.next();
+    this.addChartsToPage(this.nextBatch.value);
+
+    window.addEventListener("scroll", this.onScroll.bind(this));
+  }
+
+  onScroll() {
+    const scrollPosition = window.scrollY + window.innerHeight;
+    const totalHeight = document.documentElement.scrollHeight;
+
+    if (scrollPosition >= totalHeight - 150) {
+      this.nextBatch = this.iterator.next();
+
+      if (this.nextBatch.done) {
+        return;
+      }
+
+      this.addChartsToPage(this.nextBatch.value);
+    }
+  }
+
+  addChartsToPage(ids) {
+    for (const id of ids) {
       let chartContainer = document.createElement("div");
       chartContainer.classList.add("chart");
       chartContainer.style.position = "relative";
       document.getElementById("container").appendChild(chartContainer);
 
-      this.createCanvas(chartContainer, this.data[date]);
-      this.createTitle(chartContainer, date);
+      this.addChart(chartContainer, this.data[id]);
+      this.createTitle(chartContainer, id);
     }
   }
 
-  createCanvas(chartContainer, points) {
+  addChart(chartContainer, points) {
     let chart = LightweightCharts.createChartEx(
       chartContainer,
       new HorzScaleBehaviorPrice(),
@@ -210,7 +242,7 @@ export default class ChartManager {
         left: 50%;  
         transform: translateX(-50%);
         
-        padding: 8px;  
+        padding: 6px;  
       
         font-size: 20px;  
         font-weight: bold;  
