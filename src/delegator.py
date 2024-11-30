@@ -1,4 +1,5 @@
 import logging
+import os
 
 from src.controller.flask_app import FlaskApp
 from src.model.data_fetcher import DataFetcher
@@ -14,11 +15,11 @@ class Delegator:
 
         data_fetcher = DataFetcher(self.fetch_info)
         raw_data = data_fetcher.fetch_data()
-
+        
         flask_app = FlaskApp(
             data=raw_data,
             import_name=__name__,
-            static_folder="src/view/static",
-            template_folder="src/view/templates"
+            static_folder=os.path.abspath("src/view/static"),
+            template_folder=os.path.abspath("src/view/templates")
         )
-        flask_app.run(debug=False)
+        flask_app.run(debug=True)

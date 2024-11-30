@@ -10,7 +10,7 @@ class FlaskApp(Flask):
 
         super().__init__(**args)
         self.route('/')(self.index)
-        self.route('/get_data')(self.get_data)
+        self.route('/data')(self.get_data)
     
     def index(self) -> Response:
         return render_template('index.html')
