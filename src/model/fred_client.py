@@ -1,14 +1,10 @@
-import os
-
+from config import FRED_API_KEY
 from src.model.request_handler import RequestHandler
 
 
 class FREDClient(RequestHandler):
     def __init__(self) -> None:
-        with open(os.path.abspath('.env'), 'r') as file:
-            for line in file.readlines():
-                if line.startswith(chars := f'FRED_API_KEY='):
-                    self.api_key = (line.lstrip(chars).rstrip('\n'))
+        self.api_key = FRED_API_KEY
 
     def get_series(
         self,

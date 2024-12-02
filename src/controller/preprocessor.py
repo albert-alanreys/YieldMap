@@ -2,8 +2,6 @@ import datetime
 import json
 import logging
 
-from src.model.enums import SeriesId
-
 
 class Preprocessor:
     def __init__(self) -> None:
@@ -12,7 +10,7 @@ class Preprocessor:
     def preprocess(self, raw_data: dict) -> str:
         try:
             processed_data = {}
-            processed_months = set()
+            processed_dates = set()
 
             for series_id in raw_data:
                 for observation in raw_data[series_id]:
@@ -22,9 +20,9 @@ class Preprocessor:
                     date = datetime.datetime.strptime(
                         observation['date'], "%Y-%m-%d"
                     )
-                    year_month = (series_id, date.year, date.month)
+                    marker = (series_id, date.year, date.month)
 
-                    if year_month in processed_months:
+                    if marker in processed_dates:
                         continue
 
                     if observation['date'] not in processed_data:
@@ -36,7 +34,7 @@ class Preprocessor:
                             'value': float(observation['value'])
                         }
                     )
-                    processed_months.add(year_month)
+                    processed_dates.add(marker)
 
             return json.dumps(processed_data)
         except Exception as e:

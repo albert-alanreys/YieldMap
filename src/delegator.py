@@ -11,15 +11,15 @@ class Delegator:
         self.logger = logging.getLogger(__name__)
 
     def delegate(self) -> None:
-        self.logger.info(f'YieldMap started')
+        print('YieldMap started')
 
         data_fetcher = DataFetcher(self.fetch_info)
-        raw_data = data_fetcher.fetch_data()
+        data = data_fetcher.fetch_data()
         
         flask_app = FlaskApp(
-            data=raw_data,
+            data=data,
             import_name=__name__,
             static_folder=os.path.abspath("src/view/static"),
             template_folder=os.path.abspath("src/view/templates")
         )
-        flask_app.run(debug=True)
+        flask_app.run()

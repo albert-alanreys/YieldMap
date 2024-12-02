@@ -4,16 +4,17 @@ from src.controller.preprocessor import Preprocessor
 
 
 class FlaskApp(Flask):
-    def __init__(self, data: dict, **args: str) -> None:
+    def __init__(self, data: dict, **kwargs: str) -> None:
         preprocessor = Preprocessor()
-        self.response = preprocessor.preprocess(data)
+        self.processed_data = preprocessor.preprocess(data)
 
-        super().__init__(**args)
-        self.route('/')(self.index)
-        self.route('/data')(self.get_data)
+        super().__init__(**kwargs)
+
+        self.add_url_rule('/', 'index', self.index)
+        self.add_url_rule('/data', 'get_data', self.get_data)
     
     def index(self) -> Response:
         return render_template('index.html')
 
     def get_data(self) -> Response:
-        return self.response
+        return self.processed_data

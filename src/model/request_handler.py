@@ -14,3 +14,5 @@ class RequestHandler:
             self.logger.error(f'HTTP error: {e}')
         except requests.exceptions.RequestException as e:
             self.logger.error(f'Request failed: {e}')
+        
+        return {}
