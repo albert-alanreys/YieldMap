@@ -17,7 +17,7 @@ class DataFetcher:
         try:
             results = {}
 
-            with ThreadPoolExecutor(max_workers=3) as executor:
+            with ThreadPoolExecutor(max_workers=6) as executor:
                 data = executor.map(
                     lambda series_id:
                         self.fred_client.get_series(
