@@ -98,8 +98,8 @@ export default class ChartManager {
     },
   };
   lineOptions = {
-    lineColor: "#4f83cc",
-    lineWidth: 3,
+    color: "#4f83cc",
+    lineWidth: 2,
     lineVisible: true,
     lastValueVisible: false,
     priceLineVisible: false,
@@ -111,16 +111,16 @@ export default class ChartManager {
   chartsCount = 30;
 
   constructor(data) {
-    this.iterator = this.chartIterator(data, 30);
-    this.data = data;
-  }
+    function* chartIterator(data, batchSize) {
+      const keys = Object.keys(data);
 
-  *chartIterator(data, batchSize) {
-    const keys = Object.keys(data);
-
-    for (let i = 0; i < keys.length; i += batchSize) {
-      yield keys.slice(i, i + batchSize);
+      for (let i = 0; i < keys.length; i += batchSize) {
+        yield keys.slice(i, i + batchSize);
+      }
     }
+
+    this.iterator = chartIterator(data, 30);
+    this.data = data;
   }
 
   createCharts() {
@@ -147,9 +147,10 @@ export default class ChartManager {
 
   addChartsToPage(ids) {
     for (const id of ids) {
-      let chartContainer = document.createElement("div");
+      const chartContainer = document.createElement("div");
       chartContainer.classList.add("chart");
       chartContainer.style.position = "relative";
+
       document.getElementById("container").appendChild(chartContainer);
 
       this.addChart(chartContainer, this.data[id]);
@@ -157,101 +158,106 @@ export default class ChartManager {
     }
   }
 
-  addChart(chartContainer, points) {
-    let chart = LightweightCharts.createChartEx(
-      chartContainer,
+  addChart(container, points) {
+    const chart = LightweightCharts.createChartEx(
+      container,
       new HorzScaleBehaviorPrice(),
       this.chartOptions
     );
-    let lineSeries = chart.addLineSeries(this.lineOptions);
+    const timeScale = chart.timeScale();
+    const lineSeries = chart.addLineSeries(this.lineOptions);
+
+    timeScale.setVisibleLogicalRange({ from: 0, to: points.length - 1 });
     lineSeries.setData(points);
-    chart
-      .timeScale()
-      .setVisibleLogicalRange({ from: 0, to: points.length - 1 });
-    chart.timeScale().fitContent();
-    this.createTooltip(chartContainer, chart, lineSeries);
+
+    this.createTooltip(chart, lineSeries);
   }
 
-  createTooltip(chartContainer, chart, series) {
+  createTooltip(chart, series) {
+    const container = chart.chartElement();
     const toolTip = document.createElement("div");
+
     toolTip.style = `
+      display: none;
       position: absolute;
       left: 12px;
-      height: 100%;
+      z-index: 1000;
       
-      display: none;
-      pointer-events: none;
-    
+      width: ${this.toolTipWidth};
+      height: 100%;
       padding: 8px;
+
+      pointer-events: none;
       
       font-size: 12px;
       text-align: left;
-    
-      z-index: 1000;
-      
-      background: rgba(255, 255, 255, 0.25);
+
       border-radius: 8px;
       border-color: rgba(239, 83, 80, 1);
+      background-color: rgba(255, 255, 255, 0.25);
       box-shadow: 0 2px 5px 0 rgba(117, 134, 150, 0.45);
     `;
-    chartContainer.appendChild(toolTip);
+    container.appendChild(toolTip);
+
     chart.subscribeCrosshairMove((param) => {
       if (
         param.point === undefined ||
         !param.time ||
         param.point.x < 0 ||
-        param.point.x > chartContainer.clientWidth ||
+        param.point.x > container.clientWidth ||
         param.point.y < 0 ||
-        param.point.y > chartContainer.clientHeight
+        param.point.y > container.clientHeight
       ) {
         toolTip.style.display = "none";
       } else {
-        const dateStr = param.time;
+        const label = param.time;
+        const data = param.seriesData.get(series);
+
         toolTip.style.display = "flex";
         toolTip.style.flexDirection = "column";
         toolTip.style.justifyContent = "center";
-        const data = param.seriesData.get(series);
-        const price = data.value !== undefined ? data.value : data.close;
+        toolTip.style.top = "0px";
         toolTip.innerHTML = `
             <div style="font-size: 12px; font-weight: 700; color: #4f83cc;">⬤ UST Yield</div>
-            <div style="font-size: 24px; margin: 4px 0; color: #1a1a1a;">${price}</div>
-            <div style="font-size: 14px; color: #1a1a1a;">${dateStr}</div>
+            <div style="font-size: 24px; margin: 4px 0; color: #1a1a1a;">${data.value}</div>
+            <div style="font-size: 14px; color: #1a1a1a;">${label}</div>
         `;
-        let left = param.point.x;
+
         const timeScaleWidth = chart.timeScale().width();
         const priceScaleWidth = chart.priceScale("left").width();
         const halfTooltipWidth = this.toolTipWidth / 2;
-        left += priceScaleWidth - halfTooltipWidth;
-        left = Math.min(
-          left,
-          priceScaleWidth + timeScaleWidth - this.toolTipWidth
+        const left = Math.max(
+          Math.min(
+            param.point.x + priceScaleWidth - halfTooltipWidth,
+            priceScaleWidth + timeScaleWidth - this.toolTipWidth
+          ),
+          priceScaleWidth
         );
-        left = Math.max(left, priceScaleWidth);
         toolTip.style.left = left + "px";
-        toolTip.style.top = 0 + "px";
       }
     });
   }
 
-  createTitle(chartContainer, title) {
+  createTitle(container, title) {
     const titleDiv = document.createElement("div");
+
     titleDiv.textContent = title;
     titleDiv.style = `
         position: absolute;
         top: 0%;  
         left: 50%;  
+        z-index: 10;  
         transform: translateX(-50%);
         
         padding: 6px;  
+        border-radius: 4px;
       
         font-size: 20px;  
-        font-weight: bold;  
+        font-weight: 600;  
         text-align: center;  
         color: #1a1a1a;  
-      
-        z-index: 10;  
-        border-radius: 4px;
     `;
-    chartContainer.appendChild(titleDiv);
+
+    container.appendChild(titleDiv);
   }
 }
