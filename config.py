@@ -1,1 +1,1 @@
-FRED_API_KEY = 'c26decc127304a4661a37cd1dd01687d'
+FRED_API_KEY = "ваш_ключ"
