@@ -11,7 +11,7 @@ class Delegator:
         self.logger = logging.getLogger(__name__)
 
     def delegate(self) -> None:
-        print('YieldMap started')
+        self.logger.info('YieldMap started')
 
         data_fetcher = DataFetcher(self.fetch_info)
         data = data_fetcher.fetch_data()
